@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>What’s That Song? — by sayeed</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' height='32' width='32'><text y='25' font-size='22'>🎵</text></svg>">
+<style>
+:root {
+  --bg: #12161c;
+  --accent1: #79e1f7;
+  --accent2: #c5afe3;
+  --surface: #1d2129;
+  --surface2: #23243b;
+  --highlight: #51f2b4;
+  --muted: #bab2fa;
+  --primarytxt: #f9f9fc;
+  --mutedtxt: #a6b2d6;
+  --border: #292c3a;
+  --err: #fc627c;
+}
+
+body {
+  margin: 0; padding: 0;
+  min-height: 100vh;
+  font-family: 'Segoe UI', 'Inter', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--primarytxt);
+  box-sizing: border-box;
+  display: flex; flex-direction: column;
+}
+
+/* Header */
+header {
+  margin: 2.2rem auto 1.3rem auto;
+  padding: 0 1rem;
+  max-width: 700px;
+  text-align: center;
+}
+header h1 {
+  font-weight: 900;
+  font-size: 2.3rem;
+  letter-spacing: 0.12em;
+  background: linear-gradient(90deg, var(--accent1), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 0.3rem 0;
+}
+header .desc {
+  font-size: 1.07rem;
+  color: var(--mutedtxt);
+  font-style: italic;
+  margin: 0 0 5px 0;
+}
+
+/* Accordions */
+#main { max-width: 540px; margin: auto; background: var(--surface); border-radius: 20px; box-shadow: 0 0 30px #65e3f022; }
+section.accordion { border-bottom: 1px solid var(--border);}
+section.accordion:last-child { border-bottom: none;}
+button.accordion-header {
+  width: 100%; border: none; outline: none;
+  background: none; color: var(--accent2);
+  text-align: left; font-weight: 700; font-size: 1.09rem;
+  padding: 1.2rem 1.3rem 1.2rem 1.4rem;
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface2);
+  transition: background .21s;
+  cursor: pointer;
+}
+button.accordion-header:hover, button.accordion-header:focus { background: #2d2e46; }
+.arrow {
+  border: solid var(--accent1); border-width: 0 2.5px 2.5px 0;
+  display: inline-block; padding: 5px; margin-left: 12px; transition: transform .24s;
+}
+.arrow.down { transform: rotate(45deg);}
+.arrow.up { transform: rotate(-135deg); }
+
+/* Collapsible content */
+.accordion-content {
+  background: var(--surface);
+  padding: 0 1.6rem;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height .45s cubic-bezier(.18,.74,.45,1.1), opacity .5s;
+}
+.accordion-content.open {
+  padding: 1rem 1.9rem 2rem 1.7rem;
+  max-height: 1200px;
+  opacity: 1;
+}
+
+/* Recorder */
+#recordBtn {
+  width: 84px; height: 84px; margin: 14px auto 5px;
+  border-radius: 50%; border: none;
+  font-size: 2.2rem; background: linear-gradient(145deg, var(--accent1), var(--accent2) 96%);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--bg); box-shadow: 0 0 24px var(--accent1), 0 0 0 0 #fff0;
+  transition: box-shadow .16s, transform .1s;
+  cursor: pointer; position: relative;
+}
+#recordBtn.recording { box-shadow: 0 0 48px var(--highlight); animation: glow 1.3s infinite alternate;}
+@keyframes glow {to { box-shadow: 0 0 64px var(--accent2);} }
+#recordBtn:focus { outline: 3px solid var(--highlight);}
+#volBars { display: flex; gap: 8px; margin: 8px 0;}
+.bar { width: 7px; height: 12px; background:var(--muted); opacity:0.6; border-radius: 3px; transition: height 80ms; }
+#timer { font-weight: 700; color: var(--highlight); margin: 0.2em auto; text-align:center;}
+/* Messages */
+#errorMsg, #fallbackMsg {
+  margin-top: 0.9em; padding: 9px 0.7em; border-radius: 8px; font-weight: 700; font-size: 1em; text-align:center;
+}
+#errorMsg { background: #491e35; color: var(--err); display: none; }
+#fallbackMsg {background: #144f4d; color: var(--highlight); display: none;}
+
+/* Song Info Display */
+#songInfo { margin-top:1em; display:none; align-items:center; gap:15px; background:var(--surface2); border-radius:16px; box-shadow: 0 2px 13px #81ebff18; padding:10px 14px;}
+#songInfo img { width: 60px; height: 60px; border-radius: 10px; object-fit:cover; background: #223;}
+.song-meta { flex:1;}
+.song-title {font-weight: 800; color: #8cedfa; font-size:1.1em;}
+.song-artist {color:var(--highlight);}
+.song-album {color:var(--mutedtxt);}
+.spotify-open { background:none; border:none; color:var(--accent1); font-size:1.5em; cursor:pointer; padding:0;}
+/* Utilities */
+.utils-buttons {margin:1.3em 0 0.9em 0; display:flex; gap:17px;justify-content:center;}
+.utils-buttons button {border:none; border-radius:8px; font-weight:700; color:var(--highlight); background:var(--border); padding:9px 15px; cursor:pointer;}
+.utils-buttons button:hover, .utils-buttons button:focus{background:var(--accent1); color:var(--bg);}
+.utils-buttons button:focus{outline:2px solid var(--highlight); outline-offset:1.5px;}
+/* Recommendations */
+#recommendBox .recommended-title{font-weight:700;color:var(--accent2);margin-bottom:7px;}
+.rec-list {display:flex; gap:11px;flex-wrap:wrap; justify-content:center;}
+.rec-card {background:var(--surface2); border-radius:10px; color:var(--mutedtxt); box-shadow:0 2px 11px #c5afe311; padding:9px 8px 13px;width:110px;text-align:center;cursor:pointer; transition:box-shadow .19s;}
+.rec-card:hover{box-shadow:0 4px 30px var(--accent2);}
+.rec-card img{width:39px;height:39px;border-radius:7px;}
+.rec-title{color:var(--accent1);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* History */
+#history .hist-row{background:var(--surface2);border-radius:8px;display:flex;align-items:center;margin:0 0 9px 0;padding:8px 7px;gap:10px;cursor:pointer;}
+#history .hist-row img{width:30px;height:30px;border-radius:6px;}
+#history .hist-title{color:var(--accent1);font-weight:700;}
+/* Projects Cards */
+#projectsList{display:flex;gap:17px;flex-wrap:wrap;justify-content:center;}
+.project-card{background:var(--surface2);border-radius:12px;box-shadow:0 2px 9px #c2afe255;padding:13px 10px 19px;width:148px;text-align:center;cursor:pointer;}
+.project-title{font-weight:700;color:var(--accent1);}
+.project-desc{font-size:0.9em;color:var(--muted);}
+.project-icon{font-size:2em;margin-bottom:5px;color:var(--accent2);}
+.project-card:hover{box-shadow:0 2px 28px #97f8f7aa;}
+/* Feedback iframe */
+#feedback-content iframe{width:100%;min-height:350px;max-height:590px;border-radius:12px;border:none;box-shadow:0 2px 11px #53d8ff29;}
+/* Footer */
+footer{
+  padding:0.76em 1em; background:var(--surface2); color:var(--mutedtxt);
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:1.05em;font-weight:600;
+  border-top:1px solid #242942; margin-top:2.7em;
+  user-select:none;
+}
+footer .heart{color:#fd4965; font-size:1.3em;vertical-align:-2px; margin:0 0.3em;}
+footer a{color:var(--accent1);text-decoration:none;font-weight:700;}
+footer a:focus, footer a:hover{color:var(--muted);}
+@media (max-width:500px){#main{padding:0;} .accordion-content{padding:0.7em 0.8em;} footer{flex-direction:column;gap:2px;}}
+</style>
+</head>
+<body>
+<header>
+  <h1>What’s That Song?</h1>
+  <div class="desc">Minimal, beautiful, and functional — recognizing music, built for you by sayeed!</div>
+</header>
+<main id="main">
+  <!-- Recorder -->
+  <section class="accordion">
+    <button class="accordion-header" aria-expanded="false" aria-controls="recorder-content">🎤 Recorder & Recognizer <span class="arrow down"></span></button>
+    <div class="accordion-content" id="recorder-content" hidden>
+      <div style="text-align:center; margin-bottom:1em;">
+        <button id="recordBtn" aria-pressed="false" aria-label="Tap to record">🎤</button>
+        <div id="volBars" style="display:none;justify-content:center;gap:7px;">
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        </div>
+        <div id="timer"></div>
+      </div>
+      <div id="errorMsg"></div>
+      <div id="fallbackMsg"></div>
+      <div id="songInfo"></div>
+      <div class="utils-buttons" id="utilsWrap" style="display:none;">
+        <button id="exportBtn">💾 Export</button>
+        <button id="shareBtn">🔗 Share</button>
+        <button id="pdfBtn">🖨️ PDF</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recommendations -->
+  <section class="accordion">
+    <button class="accordion-header" aria-expanded="false" aria-controls="recommendations-content">🎶 Recommendations<span class="arrow down"></span></button>
+    <div class="accordion-content" id="recommendations-content" hidden>
+      <div id="recommendBox"></div>
+    </div>
+  </section>
+
+  <!-- History -->
+  <section class="accordion">
+    <button class="accordion-header" aria-expanded="false" aria-controls="history-content">🕑 Last Recognized Songs<span class="arrow down"></span></button>
+    <div class="accordion-content" id="history-content" hidden>
+      <div id="history"></div>
+    </div>
+  </section>
+
+  <!-- Projects -->
+  <section class="accordion">
+    <button class="accordion-header" aria-expanded="false" aria-controls="projects-content">🚀 Want to Try More Projects?<span class="arrow down"></span></button>
+    <div class="accordion-content" id="projects-content" hidden>
+      <div id="projectsList">
+        <div class="project-card" tabindex="0" role="button" aria-pressed="false"
+             onclick="window.open('https://sayeedhere.github.io/casaecipher/','_blank')">
+          <div class="project-icon">🔐</div>
+          <div class="project-title">CasaeCipher</div>
+          <div class="project-desc">Caesar cipher tool – encrypt & decrypt text!</div>
+        </div>
+        <div class="project-card" tabindex="0" role="button" aria-pressed="false"
+             onclick="window.open('https://sayeedhere.github.io/hangman/','_blank')">
+          <div class="project-icon">🎮</div>
+          <div class="project-title">Hangman Game</div>
+          <div class="project-desc">Classic Hangman: guess the word, beat the game!</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- Feedback -->
+  <section class="accordion">
+    <button class="accordion-header" aria-expanded="false" aria-controls="feedback-content">📨 Send Feedback<span class="arrow down"></span></button>
+    <div class="accordion-content" id="feedback-content" hidden>
+      <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSckMc0BrCXowAR4NHsdBvkJp47gFOKDzr_uJ3_PC99DDZzoaQ/viewform?embedded=true" width="100%" frameborder="0" marginheight="0" marginwidth="0" loading="lazy" title="Feedback form"></iframe>
+    </div>
+  </section>
+</main>
+<footer>
+  <div>
+    <a href="https://www.linkedin.com/in/sayeed-here/" target="_blank" rel="noopener">LinkedIn</a>
+  </div>
+  <div class="center-text">
+    Made with <span class="heart">❤️</span> by sayeed
+  </div>
+  <div>
+    <a href="https://github.com/SAYEEDHERE" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</footer>
+<script>
+/* Accordion Toggle */
+document.querySelectorAll('.accordion-header').forEach((btn) => {
+  btn.addEventListener('click', function() {
+    const expanded = btn.getAttribute('aria-expanded')==='true';
+    document.querySelectorAll('.accordion-header').forEach(b=>{b.setAttribute('aria-expanded','false'); b.querySelector('.arrow').classList.remove('up'); b.querySelector('.arrow').classList.add('down');});
+    document.querySelectorAll('.accordion-content').forEach(c=>{c.classList.remove('open'); c.hidden=true;});
+    if(!expanded){
+      btn.setAttribute('aria-expanded','true');
+      btn.querySelector('.arrow').classList.remove('down'); btn.querySelector('.arrow').classList.add('up');
+      let cont=document.getElementById(btn.getAttribute('aria-controls'));
+      cont.hidden=false; cont.classList.add('open');
+    }
+  });
+});
+
+/* Recorder and Song Recognition logic */
+let isRecording = false, recMedia, recChunks = [], recStream, audioContext, analyser, recTimeout, volAnimId;
+let lastSongData = null, fallbackDemo = false;
+let ACR = {
+  access_key: "59f331e1742ce5cbc92f7c3c5cb26fb7",
+  access_secret: "cniDB59PDxYdj4vaEYvmLqB4sXsQDXrrOrm4aSYp",
+  host: "identify-ap-southeast-1.acrcloud.com"
+}, Spotify = {}, spotify_token = "";
+
+const recordBtn = document.getElementById("recordBtn");
+const volBars = document.getElementById("volBars");
+const timerDiv = document.getElementById("timer");
+const errorMsg = document.getElementById("errorMsg");
+const fallbackMsg = document.getElementById("fallbackMsg");
+const songInfo = document.getElementById("songInfo");
+const recommendBox = document.getElementById("recommendBox");
+const historyDiv = document.getElementById("history");
+const utilsWrap = document.getElementById("utilsWrap");
+const exportBtn = document.getElementById("exportBtn");
+const shareBtn = document.getElementById("shareBtn");
+const pdfBtn = document.getElementById("pdfBtn");
+
+/* Prompt for Spotify keys */
+async function promptForSpotify() {
+  let spotSaved = localStorage.getItem("spot_keys");
+  if(spotSaved) Spotify = JSON.parse(spotSaved);
+  while(!Spotify.client_id || !Spotify.client_secret){
+    const input = prompt("Paste Spotify keys:\nFormat: client_id, client_secret", spotSaved || "");
+    if(!input) return false;
+    const parts = input.split(",");
+    if(parts.length === 2){
+      [Spotify.client_id, Spotify.client_secret] = parts.map(s => s.trim());
+      localStorage.setItem("spot_keys", JSON.stringify(Spotify));
+    }
+  }
+  return true;
+}
+
+recordBtn.onclick = async () => {
+  if(isRecording) return;
+  errorMsg.style.display = fallbackMsg.style.display = songInfo.style.display = recommendBox.style.display = "none";
+  utilsWrap.style.display = "none";
+  await promptForSpotify();
+  navigator.mediaDevices.getUserMedia({audio:true}).then(startRecording).catch(() => {
+    fallbackMsg.style.display = 'block';
+    fallbackMsg.textContent = "Mic permission denied. Playing demo.";
+    fallbackDemo = true;
+    playDemoSong();
+  });
+};
+
+function startRecording(stream) {
+  isRecording = true;
+  recordBtn.classList.add("recording");
+  recordBtn.setAttribute('aria-pressed','true');
+  volBars.style.display = "flex";
+  timerDiv.textContent = "10s";
+  recChunks = [];
+  recStream = stream;
+  audioContext = new AudioContext();
+  const source = audioContext.createMediaStreamSource(stream);
+  analyser = audioContext.createAnalyser();
+  analyser.fftSize = 64;
+  source.connect(analyser);
+  drawVol();
+
+  recMedia = new MediaRecorder(stream, {mimeType:"audio/webm"});
+  recMedia.start();
+  recMedia.ondataavailable = e => recChunks.push(e.data);
+
+  let secondsLeft = 10;
+  recTimeout = setInterval(() => {
+    secondsLeft--;
+    timerDiv.textContent = secondsLeft + "s";
+    if(secondsLeft <= 0) stopRecording();
+  }, 1000);
+  setTimeout(stopRecording, 10000);
+}
+function stopRecording() {
+  if(!isRecording) return;
+  isRecording = false;
+  recordBtn.classList.remove("recording");
+  recordBtn.setAttribute('aria-pressed','false');
+  volBars.style.display = "none";
+  timerDiv.textContent = "";
+  clearInterval(recTimeout);
+  recMedia.stop();
+  recStream.getTracks().forEach(t => t.stop());
+  if(audioContext && audioContext.state !== "closed") audioContext.close();
+
+  recMedia.onstop = async () => {
+    const blob = new Blob(recChunks, {type:"audio/webm"});
+    const audioData = await blob.arrayBuffer();
+    const b64 = btoa(String.fromCharCode(...new Uint8Array(audioData)));
+    recognizeSong(b64);
+  };
+}
+function drawVol() {
+  const bars = volBars.querySelectorAll(".bar");
+  const freq = new Uint8Array(analyser.frequencyBinCount);
+  function anim(){
+    if(!isRecording) return cancelAnimationFrame(volAnimId);
+    analyser.getByteFrequencyData(freq);
+    bars.forEach((bar, i) => {
+      const h = Math.max(12, freq[i] * 0.25);
+      bar.style.height = h + "px";
+      bar.style.opacity = (h / 36).toFixed(2);
+    });
+    volAnimId = requestAnimationFrame(anim);
+  }
+  anim();
+}
+
+async function makeSignature(secret, stringToSign) {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const cryptoKey = await crypto.subtle.importKey("raw", keyData, {name:"HMAC",hash:"SHA-1"}, false, ["sign"]);
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(stringToSign));
+  return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function recognizeSong(b64Audio) {
+  errorMsg.style.display = "block";
+  errorMsg.textContent = "Analyzing...";
+  fallbackMsg.style.display = songInfo.style.display = recommendBox.style.display = "none";
+  utilsWrap.style.display = "none";
+  try {
+    const ts = Math.floor(Date.now()/1000);
+    const stringToSign = ["POST","/v1/identify",ACR.access_key,"audio","1",ts].join("\n");
+    const signature = await makeSignature(ACR.access_secret,stringToSign);
+
+    const formData = new FormData();
+    formData.append("access_key", ACR.access_key);
+    formData.append("data_type", "audio");
+    formData.append("signature", signature);
+    formData.append("sample_bytes", b64Audio.length);
+    formData.append("sample", b64Audio);
+    formData.append("timestamp", ts);
+
+    const response = await fetch(`https://${ACR.host}/v1/identify`, {method:"POST", body:formData});
+    const json = await response.json();
+
+    if(!json.status || json.status.code!==0){
+      errorMsg.textContent = "Song not recognized. Try again.";
+      setTimeout(() => { errorMsg.style.display = "none"; }, 2100);
+      fallbackDemo = true;
+      playDemoSong();
+      return;
+    }
+
+    errorMsg.style.display = "none";
+
+    const meta = json.metadata.music?.[0];
+    if(!meta) {
+      errorMsg.textContent = "No match found.";
+      setTimeout(() => { errorMsg.style.display = "none"; }, 2100);
+      fallbackDemo = true;
+      playDemoSong();
+      return;
+    }
+
+    let artist = meta.artists?.map(a=>a.name).join(", ") || "Unknown Artist";
+    let album = meta.album?.name || "Unknown Album";
+    let cover = meta.album?.images?.[0]?.url 
+      || meta.external_metadata?.spotify?.album?.images?.[0]?.url
+      || "https://via.placeholder.com/80?text=🎵";
+    let spotifyId = meta.external_metadata?.spotify?.track?.id || "";
+    let previewUrl = meta.external_metadata?.spotify?.track?.preview_url || "";
+
+    lastSongData = {
+      title: meta.title || "Unknown Title",
+      artist: artist, album: album, cover: cover, spotUri: spotifyId, preview: previewUrl
+    };
+    updateSongInfo(lastSongData);
+    saveToHistory(lastSongData);
+    await fetchRecommendations(lastSongData);
+
+  } catch(e) {
+    errorMsg.textContent = "Recognition failed. Please try again.";
+    setTimeout(() => { errorMsg.style.display = "none"; }, 2200);
+    console.error(e);
+  }
+}
+
+function playDemoSong() {
+  lastSongData = {
+    title: "Tum Hi Ho", artist: "Arijit Singh", album: "Aashiqui 2",
+    cover: "https://i.scdn.co/image/ab67616d0000b27353eae99fa0204099832e63c2",
+    spotUri: "04JlGFZ5Uq0S1lGz6BlV5Y",
+    preview: "https://p.scdn.co/mp3-preview/93d5d02dbacb1f8e60da4ea449ff1706221ed688?cid=774b29d4f13844c495f206cafdad9c86"
+  };
+  updateSongInfo(lastSongData);
+  saveToHistory(lastSongData);
+  fetchRecommendations(lastSongData);
+  utilsWrap.style.display = "flex";
+}
+
+async function getSpotifyToken() {
+  const creds = btoa(Spotify.client_id + ":" + Spotify.client_secret);
+  const resp = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {Authorization: "Basic " + creds, "Content-Type":"application/x-www-form-urlencoded"},
+    body: "grant_type=client_credentials"
+  });
+  const json = await resp.json();
+  spotify_token = json.access_token;
+  return spotify_token;
+}
+
+async function fetchRecommendations(song){
+  recommendBox.innerHTML = "";
+  recommendBox.style.display = "none";
+  if(!Spotify.client_id || !Spotify.client_secret) return;
+
+  await getSpotifyToken();
+  let params = song.spotUri ? `seed_tracks=${song.spotUri}` : `seed_artists=${encodeURIComponent(song.artist)}`;
+  const resp = await fetch(`https://api.spotify.com/v1/recommendations?limit=7&${params}`, {
+    headers: {Authorization: "Bearer "+spotify_token}
+  });
+  const json = await resp.json();
+
+  if(!json.tracks || !json.tracks.length){
+    recommendBox.innerHTML = "<div style='color:#f45a5a; text-align:center;'>No recommendations found.</div>";
+    recommendBox.style.display = "block";
+    return;
+  }
+  recommendBox.innerHTML = `<div class="recommended-title">🎶 Similar Songs Recommended</div><div class="rec-list">`;
+  for(let t of json.tracks){
+    recommendBox.innerHTML += `
+      <div tabindex="0" role="button" class="rec-card" onclick="window.open('${t.external_urls.spotify}', '_blank')">
+        <img src="${t.album.images[1]?.url || t.album.images[0]?.url || ''}" alt="img"/>
+        <div class="rec-title">${t.name}</div>
+        <div class="rec-artist">${t.artists.map(a => a.name).join(", ")}</div>
+        ${t.preview_url ? `<audio class="rc-prev" controls src="${t.preview_url}"></audio>` : ""}
+      </div>`;
+  }
+  recommendBox.innerHTML += "</div>";
+  recommendBox.style.display = "block";
+}
+
+function updateSongInfo(song){
+  if(!song) return songInfo.style.display = "none";
+  songInfo.style.display = "flex";
+  songInfo.innerHTML = `
+    <img src="${song.cover}" alt="Cover art for ${song.title}">
+    <div class="song-meta">
+      <div class="song-title">${song.title}</div>
+      <div class="song-artist">${song.artist}</div>
+      <div class="song-album">${song.album}</div>
+    </div>
+    <button class="spotify-open" aria-label="Open ${song.title} on Spotify" onclick="window.open('https://open.spotify.com/track/${song.spotUri}', '_blank');">▶️</button>
+  `;
+  utilsWrap.style.display = "flex";
+}
+
+// LocalStorage Songs History
+function saveToHistory(song){
+  let hist = JSON.parse(localStorage.getItem("song_hist") || "[]");
+  hist.unshift(song);
+  while(hist.length > 5) hist.pop();
+  localStorage.setItem("song_hist", JSON.stringify(hist));
+  renderHistory();
+}
+function renderHistory(){
+  let hist = JSON.parse(localStorage.getItem("song_hist") || "[]");
+  historyDiv.innerHTML = hist.length ? hist.map(h => `
+    <div tabindex="0" class="hist-row" onclick="window.open('https://open.spotify.com/track/${h.spotUri}','_blank')" role="button">
+      <img src="${h.cover}"/><div>
+        <div class="hist-title">${h.title}</div>
+        <div class="hist-artist">${h.artist}</div>
+        <div class="hist-album">${h.album}</div>
+      </div>
+    </div>
+  `).join("") : "<div style='color:#aaa;padding:1rem;text-align:center;'>No songs recognized yet.</div>";
+}
+renderHistory();
+
+/* Utilities */
+exportBtn.onclick = () => {
+  if (!lastSongData) return;
+  const txt = `Song: ${lastSongData.title}\nArtist: ${lastSongData.artist}\nAlbum: ${lastSongData.album}\nSpotify: https://open.spotify.com/track/${lastSongData.spotUri}`;
+  const blob = new Blob([txt], {type: "text/plain"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = "recognized_song.txt"; a.click();
+  URL.revokeObjectURL(url);
+};
+
+shareBtn.onclick = () => {
+  if (!lastSongData) return;
+  const text = `🎵 ${lastSongData.title} — ${lastSongData.artist} (${lastSongData.album})\nhttps://open.spotify.com/track/${lastSongData.spotUri}`;
+  if (navigator.share) {
+    navigator.share({title: "What's That Song?", text, url: window.location.href});
+  } else {
+    const whatsapp = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    const telegram = `https://t.me/share/url?url=${encodeURIComponent('https://open.spotify.com/track/'+lastSongData.spotUri)}&text=${encodeURIComponent(text)}`;
+    if(confirm("Share via WhatsApp? OK=WhatsApp, Cancel=Telegram")) window.open(whatsapp, "_blank");
+    else window.open(telegram, "_blank");
+  }
+};
+
+pdfBtn.onclick = () => { window.print(); };
+</script>
+</body>
+</html>
+
